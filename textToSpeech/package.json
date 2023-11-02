@@ -10,6 +10,8 @@
     "test": "jest"
   },
   "dependencies": {
+    "@google-cloud/speech": "^6.0.2",
+    "@google-cloud/translate": "^8.0.2",
     "@react-native-voice/voice": "^3.2.4",
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.16",

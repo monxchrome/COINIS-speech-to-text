@@ -3,24 +3,46 @@ import {View, Text, Button} from 'react-native';
 import Voice from '@react-native-voice/voice';
 
 const TextToSpeech = () => {
-  const [isRecording, setIsRecording] = useState(false);
-  const [transcription, setTranscription] = useState('');
+  const [state, setState] = useState({
+    isRecording: false,
+    transcription: '',
+    detectedLanguage: '',
+  });
 
   useEffect(() => {
-    Voice.onSpeechResults = results => {
-      //@ts-ignore
-      setTranscription(results[0]);
+    // @ts-ignore
+    const onSpeechResults = async results => {
+      if (results.value && results.value.length > 0) {
+        const recognizedText = results.value[0];
+
+        const detectedLanguage = await detectLanguageWithWhisper(
+          recognizedText,
+        );
+
+        setState(prevState => ({
+          ...prevState,
+          transcription: recognizedText,
+          detectedLanguage,
+        }));
+      }
     };
 
+    Voice.onSpeechResults = onSpeechResults;
+
     return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
+      Voice.removeAllListeners();
     };
   }, []);
 
   const startRecording = async () => {
     try {
-      await Voice.start('en-US');
-      setIsRecording(true);
+      await Voice.start({
+        language: state.detectedLanguage,
+      });
+      setState(prevState => ({
+        ...prevState,
+        isRecording: true,
+      }));
     } catch (error) {
       console.error('Voice recording error:', error);
     }
@@ -29,19 +51,57 @@ const TextToSpeech = () => {
   const stopRecording = async () => {
     try {
       await Voice.stop();
-      setIsRecording(false);
+      setState(prevState => ({
+        ...prevState,
+        isRecording: false,
+      }));
     } catch (error) {
       console.error('Voice recording error:', error);
     }
   };
 
+  // @ts-ignore
+  const detectLanguageWithWhisper = async text => {
+    try {
+      const response = await fetch(
+        'https://api.openai.com/v1/audio/transcriptions',
+        {
+          method: 'POST',
+          headers: {
+            Authorization:
+              'Bearer sk-Lrxlqvgs9yourgUk357UT3BlbkFJNM0mFWjtrQRJgDPGYUHR',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: text,
+            model: 'whisper-large',
+          }),
+        },
+      );
+
+      if (response.status === 200) {
+        const data = await response.json();
+        if (data.language) {
+          return data.language;
+        }
+      }
+
+      return 'Unknown';
+    } catch (error) {
+      console.error('Language detection error:', error);
+      return 'Unknown';
+    }
+  };
+
   return (
     <View>
-      <Text>Speech to Text:</Text>
-      <Text>{transcription}</Text>
+      <Text>Voice Recorder:</Text>
+      <Text>Recording: {state.isRecording ? 'Yes' : 'No'}</Text>
+      <Text>Transcription: {state.transcription}</Text>
+      <Text>Detected Language: {state.detectedLanguage}</Text>
       <Button
-        title={isRecording ? 'Stop Recording' : 'Start Recording'}
-        onPress={isRecording ? stopRecording : startRecording}
+        title={state.isRecording ? 'Stop Recording' : 'Start Recording'}
+        onPress={state.isRecording ? stopRecording : startRecording}
       />
     </View>
   );
