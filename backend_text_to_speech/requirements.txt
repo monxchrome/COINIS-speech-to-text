@@ -1,12 +1,12 @@
-asgiref==3.7.2
-Django==4.2.7
+asgiref
+Django
 openai-whisper @ git+https://github.com/openai/whisper.git@fcfeaf1b61994c071bba62da47d7846933576ac9
-psycopg==3.1.12
-psycopg2-binary==2.9.9
-six==1.16.0
-sqlparse==0.4.4
-typing_extensions==4.8.0
-whisper==1.1.10
-torch==2.1.0
-torchaudio==2.1.0
-torchvision==0.16.0
+psycopg
+psycopg2-binary
+six
+sqlparse
+typing_extensions
+whisper
+torch
+torchaudio
+torchvision
