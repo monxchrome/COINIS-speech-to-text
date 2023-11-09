@@ -1,28 +1,31 @@
-import {SpeechClient} from '@google-cloud/speech';
-
-// Создайте экземпляр клиента Speech
-const speechClient = new SpeechClient({
-  keyFilename: 'path/to/your/service-account-key.json',
-});
+import axios from 'axios';
 
 // @ts-ignore
-export const determineLanguage = async text => {
+export const determineLanguage = async audioFile => {
   try {
-    const request = {
-      content: text,
-    };
+    const apiUrl = 'http://127.0.0.1:8000/transcribe-audio/';
+    const formData = new FormData();
+    formData.append('audio_file', {
+      uri: audioFile,
+      type: 'audio/mpeg',
+      name: 'audio.mp3',
+    });
 
-    // @ts-ignore
-    const [response] = await speechClient.recognize(request);
+    const response = await axios.post(apiUrl, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
-    if (response && response.results && response.results.length > 0) {
-      const language = response.results[0].languageCode;
-      return language;
+    console.log(`ebat ${response.data}`);
+
+    if (response.status === 200) {
+      return response.data.transcription;
+    } else {
+      throw new Error('Language detection failed');
     }
-
-    return null;
   } catch (error) {
     console.error('Language detection error:', error);
-    return null;
+    throw error;
   }
 };

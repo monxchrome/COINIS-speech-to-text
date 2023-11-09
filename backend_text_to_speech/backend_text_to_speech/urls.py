@@ -1,8 +1,7 @@
 from django.contrib import admin
-from django.urls import path
-from text_to_speech_app import views
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('transcribe-audio/', views.transcribe_audio, name='transcribe_audio')
+    path('whisper/', include('text_to_speech_app.urls')),
 ]

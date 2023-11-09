@@ -489,8 +489,19 @@ PODS:
     - React-jsi (= 0.72.6)
     - React-logger (= 0.72.6)
     - React-perflogger (= 0.72.6)
+  - RNAudio (4.3.0):
+    - React
+  - RNAudioRecord (0.2.2):
+    - React
+  - RNAudioRecorderPlayer (3.6.2):
+    - React-Core
   - RNScreens (3.27.0):
     - RCT-Folly (= 2021.07.22.00)
+    - React-Core
+  - RNSound (0.11.2):
+    - React-Core
+    - RNSound/Core (= 0.11.2)
+  - RNSound/Core (0.11.2):
     - React-Core
   - SocketRocket (0.6.1)
   - Yoga (1.14.0)
@@ -562,7 +573,11 @@ DEPENDENCIES:
   - React-runtimescheduler (from `../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler`)
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - RNAudio (from `../node_modules/react-native-audio`)
+  - RNAudioRecord (from `../node_modules/react-native-audio-record`)
+  - RNAudioRecorderPlayer (from `../node_modules/react-native-audio-recorder-player`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSound (from `../node_modules/react-native-sound`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
@@ -664,8 +679,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/utils"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNAudio:
+    :path: "../node_modules/react-native-audio"
+  RNAudioRecord:
+    :path: "../node_modules/react-native-audio-record"
+  RNAudioRecorderPlayer:
+    :path: "../node_modules/react-native-audio-recorder-player"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSound:
+    :path: "../node_modules/react-native-sound"
   Yoga:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
@@ -722,7 +745,11 @@ SPEC CHECKSUMS:
   React-runtimescheduler: f23e337008403341177fc52ee4ca94e442c17ede
   React-utils: fa59c9a3375fb6f4aeb66714fd3f7f76b43a9f16
   ReactCommon: dd03c17275c200496f346af93a7b94c53f3093a4
+  RNAudio: cae2991f2dccb75163f260b60da8051717b959fa
+  RNAudioRecord: 162fee3b8fb628773ec704bf0333823125be2ed7
+  RNAudioRecorderPlayer: 30bcd668e4720d9ebbfeb3169836b3b07833f77a
   RNScreens: 3c2d122f5e08c192e254c510b212306da97d2581
+  RNSound: 6c156f925295bdc83e8e422e7d8b38d33bc71852
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: b76f1acfda8212aa16b7e26bcce3983230c82603
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a

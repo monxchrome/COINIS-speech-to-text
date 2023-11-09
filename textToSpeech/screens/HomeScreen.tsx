@@ -1,7 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import VoiceRecorder from '../components/VoiceRecorder';
-import TextToSpeech from '../components/TextToSpeech';
+import TextToSpeech from '../components/textToSpeech';
 
 const HomeScreen: React.FC = () => {
   return (
