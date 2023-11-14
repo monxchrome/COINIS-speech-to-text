@@ -94,7 +94,7 @@ const AudioRecorder = () => {
     const formData = new FormData();
     formData.append('file', {
       uri: audioFileUri,
-      type: 'audio/*',
+      type: 'audio/m4a',
       name: 'audio.m4a',
     });
     formData.append('model', 'whisper-1'); // Добавляем параметр model
@@ -106,7 +106,7 @@ const AudioRecorder = () => {
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization': 'Bearer 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',
+            'Authorization': 'Bearer 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',
           },
         }
       );
