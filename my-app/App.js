@@ -69,27 +69,54 @@ const AudioRecorder = () => {
     }
   };
 
+  // const sendAudioToServer = async (audioFileUri) => {
+  //   const formData = new FormData();
+  //   formData.append('file', {
+  //     uri: audioFileUri,
+  //     type: 'audio/aac',
+  //     name: 'audio.aac',
+  //   });
+
+  //   try {
+  //     const response = await axios.post(
+  //       'http://127.0.0.1:8000/whisper/transcribe/',
+  //       formData
+  //     );
+  //     const transcription = response.data.recognized_text;
+  //     setResult(transcription);
+  //     console.log(result)
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
   const sendAudioToServer = async (audioFileUri) => {
     const formData = new FormData();
-    formData.append('audio', {
+    formData.append('file', {
       uri: audioFileUri,
-      type: 'audio/aac',
-      name: 'audio.aac',
+      type: 'audio/*',
+      name: 'audio.m4a',
     });
-
+    formData.append('model', 'whisper-1'); // Добавляем параметр model
+  
     try {
       const response = await axios.post(
-        'http://127.0.0.1:8000/whisper/transcribe/',
-        formData
+        'https://api.openai.com/v1/audio/transcriptions',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+            'Authorization': 'Bearer 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',
+          },
+        }
       );
-      const transcription = response.data.recognized_text;
+      const transcription = response.data.text;
       setResult(transcription);
-      console.log(result)
+      console.log(result);
     } catch (error) {
       console.error(error);
     }
   };
-  console.log(recording)
   return (
     <View style={styles.container}>
       <Button
