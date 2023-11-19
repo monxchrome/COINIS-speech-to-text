@@ -182,7 +182,7 @@ const AudioRecorder = () => {
     const formData = new FormData();
   
     try {
-      const response = await fetch(audioFile.uri);
+      const response = await fetch('https://cors-anywhere.herokuapp.com/' + audioFile.uri);
       const arrayBuffer = await response.arrayBuffer();
   
       const blob = new Blob([arrayBuffer], { type: 'audio/m4a' });
@@ -198,7 +198,7 @@ const AudioRecorder = () => {
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization': 'Bearer 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',
+            'Authorization': 'Bearer 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',
           },
         }
       );
