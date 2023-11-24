@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import axios from 'axios';
-import { Audio, RecordingOptionsPreset } from 'expo-av';
+import { Audio } from 'expo-av';
 
 import * as firebase from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
@@ -28,10 +28,9 @@ const password = 'test123';
 signInWithEmailAndPassword(auth, email, password)
   .then((userCredential) => {
     const user = userCredential.user;
-    console.log('Успешная аутентификация:', user);
   })
   .catch((error) => {
-    console.error('Ошибка аутентификации:', error.message);
+    console.error('AUTH ERROR:', error.message);
   });
 
 const styles = StyleSheet.create({
@@ -59,6 +58,7 @@ const AudioRecorder = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [recording, setRecording] = React.useState();
   const [result, setResult] = useState('');
+  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
   const startRecording = async () => {
   
@@ -70,9 +70,41 @@ const AudioRecorder = () => {
         playsInSilentModeIOS: true,
       });
 
+      const recordingOptions = {
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+          audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC,
+          audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MAX,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: 'audio/webm',
+          bitsPerSecond: 128000,
+          audioEncoder: 'audio/webm',
+        },
+      };
+
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      if (isSafari) {
+        recordingOptions.web.mimeType = 'audio/mp4';
+        recordingOptions.web.audioEncoder = 'audio/mp4';
+      }
+
       console.log('Starting recording..');
-      const { recording } = await Audio.Recording.createAsync( Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      const { recording } = await Audio.Recording.createAsync(recordingOptions);
       setRecording(recording);
       console.log('Recording started');
       setIsRecording(true)
@@ -92,13 +124,10 @@ const AudioRecorder = () => {
         const uri = recording.getURI();
         console.log('Recording stopped and stored at', uri);
   
-        // Загрузите файл в Firebase Storage
-        const storageRef = await uploadFileToFirebase(uri);
+        const storageRef = await uploadFileToFirebase(uri, isSafari ? '.mp4' : '.m4a');
   
-        // Получите URL загруженного файла из Firebase Storage
         const downloadURL = await getDownloadUrlFromFirebase(storageRef);
-  
-        // Отправьте файл Firebase Storage в API OpenAI
+
         const audioFile = {
           uri: downloadURL,
           type: 'audio/m4a',
@@ -113,11 +142,11 @@ const AudioRecorder = () => {
 
   const storage = getStorage(app);
 
-  const uploadFileToFirebase = async (uri) => {
+  const uploadFileToFirebase = async (uri, extension = '.m4a') => {
     try {
       const xhr = new XMLHttpRequest();
       xhr.open('GET', uri, true);
-      xhr.responseType = 'arraybuffer';  // Используем arraybuffer вместо blob
+      xhr.responseType = 'arraybuffer';
   
       return new Promise((resolve, reject) => {
         xhr.onload = function () {
@@ -132,19 +161,18 @@ const AudioRecorder = () => {
         };
         xhr.send();
       }).then((arrayBuffer) => {
-        // Создайте Blob из ArrayBuffer с правильным типом
         const blob = new Blob([arrayBuffer], { type: 'audio/m4a' });
-        // Создайте File из Blob с использованием временного имени файла
-        const file = new File([blob], 'audio.m4a', { type: 'audio/m4a' });
+        const file = new File([blob], `audio${extension}`, { type: 'audio/m4a' });
   
-        const storageRef = ref(storage, 'audio/' + new Date().toISOString() + '.m4a');
+        const storageRef = ref(storage, `audio/${new Date().toISOString()}${extension}`);
         return uploadBytes(storageRef, file).then(() => storageRef);
       });
     } catch (error) {
-      console.error('Ошибка загрузки файла в Firebase:', error);
+      console.error('Error uploading file to Firebase:', error);
       throw error;
     }
   };
+  
   
 
   // const sendAudioToServer = async (audioFileUri) => {
@@ -179,15 +207,22 @@ const AudioRecorder = () => {
   };
 
   const sendAudioToServer = async (audioFile) => {
+    console.log(audioFile);
     const formData = new FormData();
   
     try {
-      const response = await fetch('https://cors-anywhere.herokuapp.com/' + audioFile.uri);
+      // const response = await fetch('https://cors-anywhere.herokuapp.com/' + audioFile.uri);
+      const response = await fetch(audioFile.uri, {mode: 'cors'});
+      console.log(response)
       const arrayBuffer = await response.arrayBuffer();
   
-      const blob = new Blob([arrayBuffer], { type: 'audio/m4a' });
+      const mimeType = isSafari ? 'audio/mp4' : 'audio/m4a';
+      const fileExtension = isSafari ? 'mp4' : 'm4a';
   
-      const file = new File([blob], 'audio.m4a', { type: 'audio/m4a' });
+      const blob = new Blob([arrayBuffer], { type: mimeType });
+  
+      const fileName = 'audio.' + fileExtension;
+      const file = new File([blob], fileName, { type: mimeType });
   
       formData.append('file', file);
       formData.append('model', 'whisper-1');
@@ -198,7 +233,7 @@ const AudioRecorder = () => {
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            'Authorization': 'Bearer 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',
+            'Authorization': 'Bearer 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',
           },
         }
       );
@@ -210,6 +245,7 @@ const AudioRecorder = () => {
       console.error(error);
     }
   };
+  
   
   
   
