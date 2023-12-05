@@ -1,19 +1,23 @@
-import React, { useState, useCallback } from 'react';
-import { View, Text, Button } from 'react-native';
-import { Audio } from 'expo-av';
-import { uploadFileToFirebase, getDownloadUrlFromFirebase } from './firebase';
-import { sendAudioToServer } from './api';
+import { Text, View, TouchableOpacity, Image } from 'react-native';
 import styles from './styles';
+import React, { useState, useCallback } from 'react';
+import { Audio } from 'expo-av';
+import {
+  uploadFileToFirebase,
+  getDownloadUrlFromFirebase,
+} from '../../components/AudioRecorder/firebase';
+import { sendAudioToServer } from '../../components/AudioRecorder/api';
+import { useAppContext } from '../../contexts/context';
 
-const AudioRecorder = () => {
+const Streaming = () => {
   const [isRecording, setIsRecording] = useState(false);
-  const [recording, setRecording] = React.useState();
-  const [result, setResult] = useState('');
+  const [recording, setRecording] = useState<Audio.Recording | undefined>(undefined);
   const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+  const { setStreamingResult, setRecordingStatus } = useAppContext();
 
   const startRecording = useCallback(async () => {
     try {
-      console.log('Requesting permissions..');
       await Audio.requestPermissionsAsync();
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
@@ -23,7 +27,9 @@ const AudioRecorder = () => {
       const recordingOptions = {
         android: {
           extension: '.m4a',
+          // @ts-ignore
           outputFormat: Audio.RECORDING_OPTION_ANDROID_OUTPUT_FORMAT_MPEG_4,
+          // @ts-ignore
           audioEncoder: Audio.RECORDING_OPTION_ANDROID_AUDIO_ENCODER_AAC,
           sampleRate: 44100,
           numberOfChannels: 2,
@@ -31,7 +37,9 @@ const AudioRecorder = () => {
         },
         ios: {
           extension: '.m4a',
+          // @ts-ignore
           outputFormat: Audio.RECORDING_OPTION_IOS_OUTPUT_FORMAT_MPEG4AAC,
+          // @ts-ignore
           audioQuality: Audio.RECORDING_OPTION_IOS_AUDIO_QUALITY_MAX,
           sampleRate: 44100,
           numberOfChannels: 2,
@@ -55,21 +63,27 @@ const AudioRecorder = () => {
         recordingOptions.web.audioEncoder = 'audio/mp4';
       }
 
+      console.log('Detected browser:', isSafari ? 'Safari' : 'Not Safari');
+      console.log('MIME type:', recordingOptions.web.mimeType);
+
       console.log('Starting recording..');
       const { recording } = await Audio.Recording.createAsync(recordingOptions);
       setRecording(recording);
       console.log('Recording started');
       setIsRecording(true);
+      setRecordingStatus(true);
     } catch (err) {
       console.error('Failed to start recording', err);
     }
-  });
+  }, [setRecording, setIsRecording, setRecordingStatus]);
 
   const stopRecording = useCallback(async () => {
     try {
       if (recording) {
         setRecording(undefined);
-        await recording.stopAndUnloadAsync();
+        const audioRecording = recording as Audio.Recording;
+      
+        await audioRecording.stopAndUnloadAsync();
         await Audio.setAudioModeAsync({
           allowsRecordingIOS: false,
         });
@@ -90,25 +104,34 @@ const AudioRecorder = () => {
         };
 
         const transcriptionResult = await sendAudioToServer(audioFile);
-        setResult(transcriptionResult);
+        setStreamingResult(transcriptionResult);
+        setRecordingStatus(false);
       }
     } catch (e) {
       console.log(e);
     }
-  });
+  }, [recording, setRecording, setIsRecording, setRecordingStatus, isSafari]);
 
   return (
-    <View style={styles.container}>
-      <Button
-        style={styles.recordingButton}
-        title={recording ? 'Stop Recording' : 'Start Recording'}
-        onPress={recording ? stopRecording : startRecording}
-      />
-      {result && (
-        <Text style={styles.recordingButtonText}>Transcription: {result}</Text>
-      )}
+    <View style={styles.Streaming}>
+      <View style={styles.ViewText}>
+        <Text style={styles.Text}>
+          Start speaking in real-time to see your transcription:
+        </Text>
+      </View>
+      <View style={styles.ButtonView}>
+        <TouchableOpacity
+          style={styles.Button}
+          onPress={recording ? stopRecording : startRecording}
+        >
+          <Text style={styles.ButtonText}>
+            {recording ? 'Stop Recording' : 'Start Recording'}
+          </Text>
+          <Image source={require('../../assets/Microphone.svg')} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
 
-export default AudioRecorder;
+export default Streaming;

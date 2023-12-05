@@ -1,6 +1,11 @@
-import * as firebase from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
-import 'firebase/database';
+import {
+  initializeAuth,
+  getReactNativePersistence,
+  signInWithEmailAndPassword,
+  getAuth,
+} from 'firebase/auth';
+import ReactNativeAsyncStorage from '@react-native-async-storage/async-storage';
+import { initializeApp } from 'firebase/app';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import {
@@ -27,8 +32,25 @@ const firebaseConfig = {
   measurementId: `${EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID}`,
 };
 
-const app = firebase.initializeApp(firebaseConfig);
-const auth = getAuth(app);
+let app;
+let auth;
+
+if (typeof window !== 'undefined') {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+} else {
+  const isIOS =
+    /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+  if (isIOS) {
+    app = initializeApp(firebaseConfig);
+    auth = initializeAuth(app, {
+      persistence: getReactNativePersistence(ReactNativeAsyncStorage),
+    });
+  } else {
+    console.error('Unsupported platform');
+  }
+}
 
 const email = `${EXPO_PUBLIC_EMAIL}`;
 const password = `${EXPO_PUBLIC_PASSWORD}`;

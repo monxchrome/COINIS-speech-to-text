@@ -9,7 +9,6 @@ export const sendAudioToServer = async (audioFile) => {
     const response = await fetch(audioFile.uri, { mode: 'cors' });
     console.log(response);
     const arrayBuffer = await response.arrayBuffer();
-
     const mimeType = isSafari ? 'audio/mp4' : 'audio/m4a';
     const fileExtension = isSafari ? 'mp4' : 'm4a';
 
